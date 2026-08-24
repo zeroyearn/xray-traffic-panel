@@ -203,10 +203,10 @@
   <div class="kpi">
     <div class="label">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      今日流量
+      今日网址流量
     </div>
-    <div class="value" id="traffic">-</div>
-    <div class="sub">vnstat 统计</div>
+    <div class="value" id="dayNetBytes">-</div>
+    <div class="sub" id="dayNetInfo">归档累计(出站)</div>
   </div>
   <div class="kpi">
     <div class="label">
@@ -242,6 +242,16 @@
     </h2>
     <div id="netList"></div>
   </div>
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      今日网址流量 TOP (归档累计字节)
+    </h2>
+    <div id="dayNetList"></div>
+  </div>
+</div>
+
+<div class="grid">
   <div class="card">
     <h2>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -339,7 +349,15 @@ async function refresh() {
     $('genTime').textContent = d.generated;
     $('totalConn').textContent = d.total_conn.toLocaleString();
     $('windowInfo').textContent = d.window_start + ' ~ ' + d.window_end;
-    $('traffic').textContent = fmtBytes((d.rx_today || 0) + (d.tx_today || 0));
+    if (d.day_net && d.day_net.total_bytes > 0) {
+      $('dayNetBytes').textContent = fmtBytes(d.day_net.total_bytes);
+      $('dayNetInfo').textContent = d.day_net.samples + ' 次采样 · 出站';
+      renderRows($('dayNetList'), d.day_net.domains, 25, '', true);
+    } else {
+      $('dayNetBytes').textContent = '-';
+      $('dayNetInfo').textContent = '归档暂无数据';
+      $('dayNetList').innerHTML = '<div class="empty">归档暂无数据</div>';
+    }
     $('activeConn').textContent = d.active_conns;
     const ib = (d.inbounds || []).map(x => x.n).reduce((a, b) => a + b, 0);
     $('activeDetail').textContent = '入站 ' + ib;

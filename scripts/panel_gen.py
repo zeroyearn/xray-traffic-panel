@@ -98,11 +98,49 @@ def load_net():
         return None
 
 
+def load_day_archive():
+    """Aggregate today's per-domain bytes from the long-term archive (JSONL).
+
+    Samples are disjoint 5-minute windows, so summing gives today's total
+    outbound proxy traffic, comparable with vnstat's daily total.
+    """
+    day = datetime.now().strftime('%Y%m%d')
+    arch = os.environ.get('XTP_ARCHIVE_DIR', '/root/agsbx/panel/archive')
+    dom = Counter()
+    total = 0
+    samples = 0
+    try:
+        for fn in os.listdir(arch):
+            if not (fn.startswith('domains_') and fn.endswith('.jsonl')):
+                continue
+            if not fn.replace('domains_', '').replace('.jsonl', '').startswith(day):
+                continue
+            with open(os.path.join(arch, fn)) as f:
+                for line in f:
+                    try:
+                        rec = json.loads(line)
+                    except Exception:
+                        continue
+                    samples += 1
+                    total += rec.get('total_bytes', 0)
+                    for d in rec.get('domains', []):
+                        dom[d['d']] += d.get('bytes', 0)
+    except FileNotFoundError:
+        return None
+    return {
+        'day': day,
+        'samples': samples,
+        'total_bytes': total,
+        'domains': [{'d': d, 'bytes': b} for d, b in dom.most_common(40)],
+    }
+
+
 def main():
     domains, nodes, ips, hours, first, last = parse_log()
     rx, tx = vnstat_daily()
     total_conn, inbounds, targets = current_conns()
     net = load_net()
+    day_net = load_day_archive()
 
     top_domains = [{'d': d, 'n': n} for d, n in domains.most_common(25)]
     top_nodes = [{'d': d, 'n': n} for d, n in nodes.most_common()]
@@ -124,10 +162,11 @@ def main():
         'hours': hours_list,
         'inbounds': inbounds_list,
         'net': net,
+        'day_net': day_net,
     }
     with open(OUT, 'w') as f:
         json.dump(data, f)
-    print(f'panel data written: {len(top_domains)} domains, {total_conn} active conns, net={bool(net)}')
+    print(f'panel data written: {len(top_domains)} domains, {total_conn} active conns, net={bool(net)}, day_net={bool(day_net)}')
 
 
 if __name__ == '__main__':
