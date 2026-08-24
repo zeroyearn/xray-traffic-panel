@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代理流量面板</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #8a8a8a;
+    --line: #e8e8e8;
+    --accent: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --card: #fafafa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .kpi .label {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .kpi .value {
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f2f2f2;
+    font-size: 13px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
+  .row .num {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: 12px;
+    min-width: 60px;
+    text-align: right;
+  }
+  .bar {
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin-left: 12px;
+    width: 80px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100px;
+    margin-top: 8px;
+  }
+  .bars .b {
+    flex: 1;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    position: relative;
+  }
+  .bars .b span {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 20px;
+    padding-bottom: 12px;
+  }
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; text-align: center; }
+  svg { flex-shrink: 0; }
+  .hl { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+    代理流量面板
+  </h1>
+  <div class="status">
+    <span class="dot"></span>
+    <span>实时监控</span>
+    <span id="updated">-</span>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      总连接数
+    </div>
+    <div class="value" id="totalConn">-</div>
+    <div class="sub" id="windowInfo">-</div>
+  </div>
+  <div class="kpi">
+    <div class="label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      今日流量
+    </div>
+    <div class="value" id="traffic">-</div>
+    <div class="sub">vnstat 统计</div>
+  </div>
+  <div class="kpi">
+    <div class="label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><circle cx="15" cy="12" r="3"/><path d="M18 9l2 3-2 3"/></svg>
+      当前连接
+    </div>
+    <div class="value" id="activeConn">-</div>
+    <div class="sub" id="activeDetail">-</div>
+  </div>
+  <div class="kpi">
+    <div class="label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      近15分钟流量
+    </div>
+    <div class="value" id="netBytes">-</div>
+    <div class="sub" id="netStreams">-</div>
+  </div>
+  <div class="kpi">
+    <div class="label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+      来源 IP
+    </div>
+    <div class="value" id="srcIps">-</div>
+    <div class="sub">活跃客户端</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      网址流量 TOP (近15分钟字节)
+    </h2>
+    <div id="netList"></div>
+  </div>
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      目标域名连接 TOP 25
+    </h2>
+    <div id="domainList"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      来源 IP TOP 10
+    </h2>
+    <div id="ipList"></div>
+  </div>
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      节点分布
+    </h2>
+    <div id="nodeList"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      小时活动量
+    </h2>
+    <div id="hourBars" class="bars"></div>
+  </div>
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
+      近15分钟流量构成
+    </h2>
+    <div id="netShare"></div>
+  </div>
+</div>
+
+<div class="footer">数据每 60 秒采集 · 页面每 30 秒自动刷新 · 生成于 <span id="genTime">-</span></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const iconGlobe = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+
+function fmtBytes(b) {
+  if (b === null || b === undefined) return '-';
+  const u = ['B','KB','MB','GB','TB'];
+  let i = 0, n = b;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
+}
+
+function renderRows(el, items, max, unit, isBytes) {
+  if (!items || items.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const top = items.slice(0, max);
+  const maxN = top[0].n !== undefined ? top[0].n : (top[0].bytes || 1);
+  el.innerHTML = top.map(r => {
+    const v = r.n !== undefined ? r.n : (r.bytes || 0);
+    const pct = Math.round((v / maxN) * 100);
+    const label = isBytes ? fmtBytes(v) : (v + (unit || ''));
+    return `<div class="row"><span class="name" title="${r.d}">${iconGlobe} ${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${label}</span></div>`;
+  }).join('');
+}
+
+function renderHours(hours) {
+  if (!hours || hours.length === 0) { $('hourBars').innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const last = hours.slice(-16);
+  const maxN = Math.max(...last.map(h => h.n), 1);
+  $('hourBars').innerHTML = last.map(h => {
+    const hgt = Math.max(2, Math.round((h.n / maxN) * 100));
+    return `<div class="b" style="height:${hgt}%" title="${h.d}:00 · ${h.n}"><span>${h.d.slice(5)}</span></div>`;
+  }).join('');
+}
+
+function renderNetShare(net) {
+  const el = $('netShare');
+  if (!net || !net.domains || net.domains.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const total = net.total_bytes || 1;
+  el.innerHTML = net.domains.slice(0, 10).map(r => {
+    const pct = Math.round((r.bytes / total) * 100);
+    return `<div class="row"><span class="name" title="${r.d}">${iconGlobe} ${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${pct}%</span></div>`;
+  }).join('');
+}
+
+async function refresh() {
+  try {
+    const res = await fetch('panel_data.json?t=' + Date.now());
+    const d = await res.json();
+    $('updated').textContent = '更新于 ' + d.generated;
+    $('genTime').textContent = d.generated;
+    $('totalConn').textContent = d.total_conn.toLocaleString();
+    $('windowInfo').textContent = d.window_start + ' ~ ' + d.window_end;
+    $('traffic').textContent = fmtBytes((d.rx_today || 0) + (d.tx_today || 0));
+    $('activeConn').textContent = d.active_conns;
+    const ib = (d.inbounds || []).map(x => x.n).reduce((a, b) => a + b, 0);
+    $('activeDetail').textContent = '入站 ' + ib;
+    $('srcIps').textContent = (d.top_ips || []).length;
+    if (d.net) {
+      $('netBytes').textContent = fmtBytes(d.net.total_bytes);
+      $('netStreams').textContent = (d.net.domains || []).length + ' 个目标';
+      renderRows($('netList'), d.net.domains, 25, '', true);
+      renderNetShare(d.net);
+    } else {
+      $('netBytes').textContent = '-';
+      $('netStreams').textContent = '抓包分析未就绪';
+      $('netList').innerHTML = '<div class="empty">等待抓包数据…</div>';
+      $('netShare').innerHTML = '<div class="empty">等待抓包数据…</div>';
+    }
+    renderRows($('domainList'), d.top_domains, 25);
+    renderRows($('ipList'), d.top_ips, 10);
+    renderRows($('nodeList'), d.top_nodes, 10);
+    renderHours(d.hours);
+  } catch (e) {
+    $('updated').textContent = '加载失败: ' + e.message;
+  }
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>
