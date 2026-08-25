@@ -292,6 +292,16 @@
   <div class="card">
     <h2>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
+      服务分类汇总 (近15分钟)
+    </h2>
+    <div id="svcList"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
       近15分钟流量构成
     </h2>
     <div id="netShare"></div>
@@ -371,11 +381,13 @@ async function refresh() {
       $('netStreams').textContent = (d.net.domains || []).length + ' 个目标';
       renderRows($('netList'), d.net.domains, 25, '', true);
       renderNetShare(d.net);
+      renderRows($('svcList'), d.net.services, 20, '', true);
     } else {
       $('netBytes').textContent = '-';
       $('netStreams').textContent = '抓包分析未就绪';
       $('netList').innerHTML = '<div class="empty">等待抓包数据…</div>';
       $('netShare').innerHTML = '<div class="empty">等待抓包数据…</div>';
+      $('svcList').innerHTML = '<div class="empty">等待抓包数据…</div>';
     }
     renderRows($('domainList'), d.top_domains, 25);
     renderRows($('ipList'), d.top_ips, 10);
