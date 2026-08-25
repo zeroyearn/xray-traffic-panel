@@ -91,9 +91,9 @@ def main():
         if not dom:
             state.add(path)
             continue
-        # window start: prefer filename timestamp (cap_YYYYMMDD_HHMMSS.pcap), else mtime-5min
+        # window start: prefer filename timestamp (cap_YYYYMMDD_HHMMSS.pcap or cap_00001_YYYYMMDDHHMMSS.pcap), else mtime-5min
         base = os.path.basename(path)
-        m = re.match(r'cap_(\d{8})_(\d{6})\.pcap', base)
+        m = re.match(r'cap_(?:\d{5}_)?(\d{8})(\d{6})\.pcap', base)
         if m:
             ts = datetime.strptime(m.group(1) + m.group(2), '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
         else:
