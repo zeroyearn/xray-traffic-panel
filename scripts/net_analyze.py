@@ -24,7 +24,7 @@ WINDOW_MIN = int(os.environ.get('XTP_WINDOW_MIN', '15'))
 def analyze():
     now = datetime.now().timestamp()
     files = []
-    for fn in glob.glob(os.path.join(PCAP_DIR, 'cap.pcap*')):
+    for fn in glob.glob(os.path.join(PCAP_DIR, 'cap*.pcap')):
         if os.path.isfile(fn):
             age = (now - os.path.getmtime(fn)) / 60
             if age <= WINDOW_MIN * 2:

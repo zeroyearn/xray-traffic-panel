@@ -12,6 +12,7 @@ Config via environment variables:
 """
 import json
 import os
+import re
 import subprocess
 from collections import defaultdict
 from datetime import datetime
@@ -74,7 +75,7 @@ def main():
 
     candidates = []
     for fn in os.listdir(PCAP_DIR):
-        if not fn.startswith('cap.pcap'):
+        if not fn.startswith('cap') or not fn.endswith('.pcap'):
             continue
         path = os.path.join(PCAP_DIR, fn)
         age = (now.timestamp() - os.path.getmtime(path)) / 60
@@ -90,8 +91,14 @@ def main():
         if not dom:
             state.add(path)
             continue
-        ts = datetime.fromtimestamp(mtime - 300).strftime('%Y-%m-%d %H:%M:%S')
-        day_key = datetime.fromtimestamp(mtime).strftime('%Y%m%d')
+        # window start: prefer filename timestamp (cap_YYYYMMDD_HHMMSS.pcap), else mtime-5min
+        base = os.path.basename(path)
+        m = re.match(r'cap_(\d{8})_(\d{6})\.pcap', base)
+        if m:
+            ts = datetime.strptime(m.group(1) + m.group(2), '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            ts = datetime.fromtimestamp(mtime - 300).strftime('%Y-%m-%d %H:%M:%S')
+        day_key = ts[:10].replace('-', '')
         rec = {
             'ts': ts,
             'total_bytes': sum(dom.values()),
