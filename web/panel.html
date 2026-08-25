@@ -9,467 +9,874 @@
 <title>代理流量面板</title>
 <style>
   :root {
-    --bg: #ffffff;
-    --fg: #1a1a1a;
-    --muted: #8a8a8a;
-    --line: #e8e8e8;
+    --bg: #f6f8fb;
+    --panel: #ffffff;
+    --panel-soft: #f8fafc;
+    --fg: #172033;
+    --muted: #7b8496;
+    --muted-2: #a4acba;
+    --line: #e7ebf2;
+    --line-strong: #dce2ec;
     --accent: #2563eb;
+    --accent-2: #3b82f6;
+    --accent-soft: #eff6ff;
+    --accent-soft-2: #dbeafe;
     --green: #16a34a;
+    --green-soft: #ecfdf3;
     --red: #dc2626;
-    --card: #fafafa;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 24px rgba(15, 23, 42, .04);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
   body {
+    margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     font-size: 14px;
     line-height: 1.5;
-    padding: 24px;
-    max-width: 1200px;
-    margin: 0 auto;
   }
-  .header {
+  button, input, select { font: inherit; }
+
+  .page {
+    width: min(1440px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 26px 0 36px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+  .title-wrap { min-width: 0; }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.2;
+    letter-spacing: -.03em;
+    font-weight: 760;
+  }
+  .subtitle {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .status-box {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: 0 1px 2px rgba(15,23,42,.02);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, .09);
+  }
+  .status-main { font-size: 12px; font-weight: 700; color: #2b3344; }
+  .status-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .kpi {
+    position: relative;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 128px;
+    box-shadow: var(--shadow);
+  }
+  .kpi.primary {
+    border-color: #cfe0ff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  }
+  .kpi-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    gap: 8px;
   }
-  .header h1 {
-    font-size: 20px;
-    font-weight: 700;
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .icon-box {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: var(--panel-soft);
+    color: #64748b;
+    border: 1px solid #edf0f5;
+  }
+  .primary .icon-box { background: var(--accent-soft); color: var(--accent); border-color: #dbeafe; }
+  .kpi-value {
+    margin-top: 14px;
+    font-size: 29px;
+    line-height: 1;
+    font-weight: 760;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-sub {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(330px, .85fr);
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-width: 0;
+  }
+  .card-head {
+    padding: 15px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid #eef1f5;
+  }
+  .card-title-wrap { min-width: 0; }
+  .card-title {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 720;
   }
-  .status {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 12px;
+  .card-desc {
     color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
   }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--green);
-    display: inline-block;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .kpi {
-    background: var(--card);
+  .pill {
+    flex-shrink: 0;
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .kpi .label {
-    font-size: 12px;
+    background: var(--panel-soft);
     color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 650;
   }
-  .kpi .value {
-    font-size: 24px;
-    font-weight: 700;
+  .pill.blue { color: var(--accent); background: var(--accent-soft); border-color: #dbeafe; }
+
+  .overview-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(240px, .6fr);
+    gap: 18px;
+    padding: 16px;
+    min-height: 250px;
+  }
+  .trend-wrap { min-width: 0; }
+  .trend-metrics {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .trend-big { font-size: 23px; font-weight: 760; letter-spacing: -.035em; }
+  .trend-label { color: var(--muted); font-size: 11px; }
+  .chart {
+    height: 165px;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    position: relative;
+    padding: 12px 2px 24px;
+    border-bottom: 1px solid var(--line);
+    background:
+      linear-gradient(to top, transparent 24%, #f2f5f9 25%, transparent 26%),
+      linear-gradient(to top, transparent 49%, #f2f5f9 50%, transparent 51%),
+      linear-gradient(to top, transparent 74%, #f2f5f9 75%, transparent 76%);
+  }
+  .chart-bar {
+    flex: 1;
+    min-width: 5px;
+    max-width: 26px;
+    border-radius: 5px 5px 2px 2px;
+    background: linear-gradient(180deg, #4f83f1 0%, #2563eb 100%);
+    opacity: .88;
+    position: relative;
+    cursor: default;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .chart-bar:hover { opacity: 1; transform: translateY(-2px); }
+  .chart-bar::after {
+    content: attr(data-label);
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--muted);
+    font-size: 9px;
+    white-space: nowrap;
+  }
+  .chart-empty { color: var(--muted); margin: auto; font-size: 12px; }
+
+  .summary-column {
+    border-left: 1px solid var(--line);
+    padding-left: 18px;
+  }
+  .mini-stat {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f2f6;
+  }
+  .mini-stat:last-child { border-bottom: 0; }
+  .mini-label { font-size: 11px; color: var(--muted); }
+  .mini-value { font-size: 18px; font-weight: 730; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .mini-note { font-size: 10px; color: var(--muted-2); margin-top: 1px; }
+
+  .donut-body {
+    padding: 18px 16px 16px;
+  }
+  .donut-row {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+  }
+  .donut {
+    width: 146px;
+    height: 146px;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(#e9eef6 0 100%);
+  }
+  .donut::after {
+    content: "";
+    position: absolute;
+    inset: 27px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: inset 0 0 0 1px #eef1f5;
+  }
+  .donut-center {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .donut-value { font-size: 18px; font-weight: 760; letter-spacing: -.03em; }
+  .donut-label { color: var(--muted); font-size: 10px; margin-top: 1px; }
+  .legend { min-width: 0; }
+  .legend-row {
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+  }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .legend-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+  .legend-value { color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+
+  .section-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .full { grid-column: 1 / -1; }
+
+  .rank-list { padding: 6px 10px 10px; }
+  .rank-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) minmax(72px, 22%) 74px;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 7px 7px;
+    border-bottom: 1px solid #f1f3f6;
+  }
+  .rank-row:last-child { border-bottom: 0; }
+  .rank-no {
+    color: var(--muted-2);
+    font-size: 10px;
+    text-align: center;
     font-variant-numeric: tabular-nums;
   }
-  .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px;
-  }
-  .card h2 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid #f2f2f2;
-    font-size: 13px;
-  }
-  .row:last-child { border-bottom: none; }
-  .row .name {
-    flex: 1;
+  .rank-no.top { color: var(--accent); font-weight: 800; }
+  .rank-name {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-right: 12px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  .row .num {
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-    font-size: 12px;
-    min-width: 60px;
-    text-align: right;
+  .service-name { font-family: inherit; display: flex; align-items: center; gap: 7px; }
+  .service-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: var(--svc-color, var(--accent));
+    background: color-mix(in srgb, var(--svc-color, var(--accent)) 9%, white);
+    border: 1px solid color-mix(in srgb, var(--svc-color, var(--accent)) 16%, white);
+    font-size: 9px;
+    font-weight: 800;
   }
-  .bar {
-    height: 4px;
-    background: var(--line);
-    border-radius: 2px;
-    margin-left: 12px;
-    width: 80px;
+  .progress {
+    height: 7px;
+    border-radius: 999px;
+    background: #edf1f6;
     overflow: hidden;
-    flex-shrink: 0;
   }
-  .bar i {
+  .progress > i {
     display: block;
     height: 100%;
+    border-radius: inherit;
     background: var(--accent);
-    border-radius: 2px;
   }
-  .bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 3px;
-    height: 100px;
-    margin-top: 8px;
-  }
-  .bars .b {
-    flex: 1;
-    background: var(--accent);
-    border-radius: 2px 2px 0 0;
-    min-height: 2px;
-    position: relative;
-  }
-  .bars .b span {
-    position: absolute;
-    bottom: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 9px;
-    color: var(--muted);
+  .rank-value {
+    text-align: right;
+    color: #4b5565;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .footer {
+  .empty {
+    color: var(--muted);
     text-align: center;
+    padding: 24px 12px;
+    font-size: 12px;
+  }
+
+  .tab-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: #f3f5f8;
+    border: 1px solid #eceff4;
+    border-radius: 9px;
+  }
+  .tab-btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
     color: var(--muted);
     font-size: 11px;
-    margin-top: 20px;
-    padding-bottom: 12px;
+    font-weight: 650;
+    padding: 5px 9px;
+    border-radius: 6px;
+    cursor: pointer;
   }
-  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; text-align: center; }
-  svg { flex-shrink: 0; }
-  .hl { color: var(--accent); }
+  .tab-btn.active {
+    background: white;
+    color: var(--fg);
+    box-shadow: 0 1px 2px rgba(15,23,42,.08);
+  }
+
+  .footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 10px;
+    padding-top: 6px;
+  }
+  .footer-dot { width: 3px; height: 3px; border-radius: 50%; background: #c4cad4; }
+
+  .svg-icon { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (max-width: 1120px) {
+    .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .overview-body { grid-template-columns: minmax(0,1fr) 260px; }
+  }
+  @media (max-width: 760px) {
+    .page { width: min(100% - 24px, 1440px); padding-top: 18px; }
+    .topbar { flex-direction: column; }
+    .status-box { width: 100%; }
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .section-grid { grid-template-columns: 1fr; }
+    .full { grid-column: auto; }
+    .overview-body { grid-template-columns: 1fr; }
+    .summary-column { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 4px; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .mini-stat { border-bottom: 0; }
+    .donut-row { grid-template-columns: 120px minmax(0,1fr); gap: 12px; }
+    .donut { width: 120px; height: 120px; }
+    .donut::after { inset: 23px; }
+    .rank-row { grid-template-columns: 24px minmax(0,1fr) 64px; }
+    .rank-row .progress { display: none; }
+  }
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 23px; }
+    .summary-column { grid-template-columns: 1fr 1fr; }
+    .donut-row { grid-template-columns: 1fr; justify-items: center; }
+    .legend { width: 100%; }
+    .card-head { align-items: flex-start; }
+    .tabs { max-width: 100%; overflow-x: auto; }
+  }
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-    代理流量面板
-  </h1>
-  <div class="status">
-    <span class="dot"></span>
-    <span>实时监控</span>
-    <span id="updated">-</span>
-  </div>
-</div>
-
-<div class="kpis">
-  <div class="kpi">
-    <div class="label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      总连接数
+<div class="page">
+  <header class="topbar">
+    <div class="title-wrap">
+      <div class="eyebrow">
+        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg>
+        Proxy traffic observability
+      </div>
+      <h1>代理流量面板</h1>
+      <div class="subtitle">快速判断当前连接、流量去向、服务占比与异常活跃来源</div>
     </div>
-    <div class="value" id="totalConn">-</div>
-    <div class="sub" id="windowInfo">-</div>
-  </div>
-  <div class="kpi">
-    <div class="label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      今日网址流量
+    <div class="status-box">
+      <span class="status-dot" aria-hidden="true"></span>
+      <div>
+        <div class="status-main">实时监控中</div>
+        <div class="status-sub" id="updated">等待首次数据…</div>
+      </div>
     </div>
-    <div class="value" id="dayNetBytes">-</div>
-    <div class="sub" id="dayNetInfo">归档累计(出站)</div>
-  </div>
-  <div class="kpi">
-    <div class="label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><circle cx="15" cy="12" r="3"/><path d="M18 9l2 3-2 3"/></svg>
-      当前连接
-    </div>
-    <div class="value" id="activeConn">-</div>
-    <div class="sub" id="activeDetail">-</div>
-  </div>
-  <div class="kpi">
-    <div class="label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      近15分钟流量
-    </div>
-    <div class="value" id="netBytes">-</div>
-    <div class="sub" id="netStreams">-</div>
-  </div>
-  <div class="kpi">
-    <div class="label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-      来源 IP
-    </div>
-    <div class="value" id="srcIps">-</div>
-    <div class="sub">活跃客户端</div>
-  </div>
-</div>
+  </header>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      网址流量 TOP (近15分钟字节)
-    </h2>
-    <div id="netList"></div>
-  </div>
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      今日网址流量 TOP (归档累计字节)
-    </h2>
-    <div id="dayNetList"></div>
-  </div>
-</div>
+  <section class="kpi-grid" aria-label="核心指标">
+    <article class="kpi primary">
+      <div class="kpi-top">
+        <span class="kpi-label">近 15 分钟流量</span>
+        <span class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span>
+      </div>
+      <div class="kpi-value" id="netBytes">-</div>
+      <div class="kpi-sub" id="netStreams">等待抓包数据</div>
+    </article>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      目标域名连接 TOP 25
-    </h2>
-    <div id="domainList"></div>
-  </div>
-</div>
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">今日网址流量</span>
+        <span class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+      </div>
+      <div class="kpi-value" id="dayNetBytes">-</div>
+      <div class="kpi-sub" id="dayNetInfo">归档累计 · 出站</div>
+    </article>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      来源 IP TOP 10
-    </h2>
-    <div id="ipList"></div>
-  </div>
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-      节点分布
-    </h2>
-    <div id="nodeList"></div>
-  </div>
-</div>
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">当前连接</span>
+        <span class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M7 7h10v10H7z"/><path d="M4 12H2m20 0h-2M12 4V2m0 20v-2"/></svg></span>
+      </div>
+      <div class="kpi-value" id="activeConn">-</div>
+      <div class="kpi-sub" id="activeDetail">入站 -</div>
+    </article>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-      小时活动量
-    </h2>
-    <div id="hourBars" class="bars"></div>
-  </div>
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
-      服务分类汇总 (近15分钟)
-    </h2>
-    <div id="svcList"></div>
-  </div>
-</div>
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">总连接数</span>
+        <span class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg></span>
+      </div>
+      <div class="kpi-value" id="totalConn">-</div>
+      <div class="kpi-sub" id="windowInfo">统计窗口 -</div>
+    </article>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      今日服务分类 TOP (归档累计)
-    </h2>
-    <div id="daySvcList"></div>
-  </div>
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      本月服务分类 TOP
-    </h2>
-    <div id="monthSvcList"></div>
-  </div>
-</div>
+    <article class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">活跃来源 IP</span>
+        <span class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 8h5m-2.5-2.5v5"/></svg></span>
+      </div>
+      <div class="kpi-value" id="srcIps">-</div>
+      <div class="kpi-sub">当前统计窗口内去重来源</div>
+    </article>
+  </section>
 
-<div class="grid">
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      全时段服务分类 TOP
-    </h2>
-    <div id="allSvcList"></div>
-  </div>
-  <div class="card">
-    <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
-      服务分类汇总 (近15分钟)
-    </h2>
-    <div id="svcList"></div>
-  </div>
-</div>
+  <section class="dashboard-grid">
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>小时活动趋势</h2>
+          <div class="card-desc">最近 16 个小时的连接活跃度，快速发现峰值时段</div>
+        </div>
+        <span class="pill blue">最近 16 小时</span>
+      </div>
+      <div class="overview-body">
+        <div class="trend-wrap">
+          <div class="trend-metrics">
+            <span class="trend-big" id="hourPeak">-</span>
+            <span class="trend-label" id="hourPeakLabel">峰值连接</span>
+          </div>
+          <div id="hourBars" class="chart"><div class="chart-empty">等待小时统计数据…</div></div>
+        </div>
+        <div class="summary-column">
+          <div class="mini-stat">
+            <div class="mini-label">当前目标数</div>
+            <div class="mini-value" id="targetCount">-</div>
+            <div class="mini-note">近 15 分钟域名数</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-label">Top 服务占比</div>
+            <div class="mini-value" id="topServiceShare">-</div>
+            <div class="mini-note" id="topServiceName">暂无服务数据</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-label">今日采样</div>
+            <div class="mini-value" id="sampleCount">-</div>
+            <div class="mini-note">归档累计次数</div>
+          </div>
+        </div>
+      </div>
+    </article>
 
-<div class="footer">数据每 60 秒采集 · 页面每 30 秒自动刷新 · 生成于 <span id="genTime">-</span></div>
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>近 15 分钟服务构成</h2>
+          <div class="card-desc">按出站字节聚合，识别主要带宽去向</div>
+        </div>
+        <span class="pill">实时</span>
+      </div>
+      <div class="donut-body">
+        <div class="donut-row">
+          <div id="serviceDonut" class="donut">
+            <div class="donut-center"><div class="donut-value" id="serviceCount">-</div><div class="donut-label">服务</div></div>
+          </div>
+          <div id="serviceLegend" class="legend"><div class="empty">暂无服务数据</div></div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="section-grid">
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18"/></svg>近 15 分钟网址流量</h2>
+          <div class="card-desc">当前窗口内最主要的目标域名</div>
+        </div>
+        <span class="pill blue">TOP 15</span>
+      </div>
+      <div id="netList" class="rank-list"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>今日网址流量</h2>
+          <div class="card-desc">按今日归档累计出站字节排序</div>
+        </div>
+        <span class="pill">今日累计</span>
+      </div>
+      <div id="dayNetList" class="rank-list"></div>
+    </article>
+  </section>
+
+  <section class="section-grid">
+    <article class="card full">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>目标域名连接排行</h2>
+          <div class="card-desc">按连接次数排序，可用于识别持续高频请求目标</div>
+        </div>
+        <span class="pill">TOP 25</span>
+      </div>
+      <div id="domainList" class="rank-list"></div>
+    </article>
+  </section>
+
+  <section class="section-grid">
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><path d="M3 19a5 5 0 0 1 10 0M16 6h5M18.5 3.5v5"/></svg>来源 IP</h2>
+          <div class="card-desc">当前窗口内最活跃的客户端来源</div>
+        </div>
+        <span class="pill">TOP 10</span>
+      </div>
+      <div id="ipList" class="rank-list"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 21s7-5 7-12a7 7 0 1 0-14 0c0 7 7 12 7 12z"/><circle cx="12" cy="9" r="2"/></svg>节点分布</h2>
+          <div class="card-desc">连接命中的代理节点分布</div>
+        </div>
+        <span class="pill">TOP 10</span>
+      </div>
+      <div id="nodeList" class="rank-list"></div>
+    </article>
+  </section>
+
+  <section class="section-grid">
+    <article class="card full">
+      <div class="card-head tab-head">
+        <div class="card-title-wrap">
+          <h2 class="card-title"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>服务流量排行</h2>
+          <div class="card-desc">在不同时间范围之间切换，查看长期带宽结构</div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="服务统计时间范围">
+          <button class="tab-btn active" type="button" data-tab="now">近15分钟</button>
+          <button class="tab-btn" type="button" data-tab="day">今日</button>
+          <button class="tab-btn" type="button" data-tab="month">本月</button>
+          <button class="tab-btn" type="button" data-tab="all">全时段</button>
+        </div>
+      </div>
+      <div id="serviceRank" class="rank-list"></div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <span>数据每 60 秒采集</span><span class="footer-dot"></span>
+    <span>页面每 30 秒刷新</span><span class="footer-dot"></span>
+    <span>生成于 <span id="genTime">-</span></span>
+  </footer>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
-const iconGlobe = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
 
-// 服务图标库: 每个服务一个 SVG (lucide 风格, stroke=currentColor) + 品牌色
-const SVC_META = {
-  'Apple':      { color: '#555555', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.05 12.54c-.03-2.84 2.32-4.2 2.42-4.27-1.32-1.93-3.37-2.2-4.1-2.23-1.75-.18-3.4 1.03-4.29 1.03-.88 0-2.25-1-3.7-.97-1.9.03-3.66 1.11-4.64 2.82-1.98 3.43-.5 8.51 1.42 11.29.94 1.36 2.06 2.89 3.53 2.84 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.39 3.43-2.76 1.08-1.58 1.53-3.11 1.55-3.19-.03-.01-2.97-1.14-3-4.53zM14.3 4.29c.78-.94 1.3-2.25 1.16-3.55-1.12.05-2.48.75-3.28 1.69-.72.83-1.35 2.16-1.18 3.43 1.25.1 2.52-.63 3.3-1.57z"/></svg>' },
-  'Google':     { color: '#4285F4', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><line x1="15.5" y1="9" x2="19" y2="9"/><line x1="17.25" y1="7.25" x2="17.25" y2="10.75"/></svg>' },
-  'Microsoft':  { color: '#00A4EF', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 2h9v9H2zM13 2h9v9h-9zM2 13h9v9H2zM13 13h9v9h-9z"/></svg>' },
-  'Steam':      { color: '#1B2838', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>' },
-  'Telegram':   { color: '#229ED9', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.5 3.5L2.9 10.8c-.9.36-.86 1.66.05 1.96l4.6 1.52 1.76 5.62c.3.96 1.5 1.16 2.1.36l2.5-3.35 4.7 3.46c.8.6 1.9.15 2.1-.84l2.9-15.1c.2-1.03-.82-1.88-1.7-1.5zM9.6 14.6l.9-4.5 7.2-5.6-8.1 10.1z"/></svg>' },
-  'Netflix':    { color: '#E50914', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8.5 2h3v20h-3zM13.5 2h3l-3 20h-3zM4 4.5h3v15H4zM17 4.5h3v15h-3z"/></svg>' },
-  'YouTube':    { color: '#FF0000', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M23 12s0-3.3-.42-4.88c-.23-.87-.9-1.54-1.77-1.77C19.2 4.93 12 4.93 12 4.93s-7.2 0-8.81.42c-.87.23-1.54.9-1.77 1.77C1 8.7 1 12 1 12s0 3.3.42 4.88c.23.87.9 1.54 1.77 1.77 1.61.42 8.81.42 8.81.42s7.2 0 8.81-.42c.87-.23 1.54-.9 1.77-1.77C23 15.3 23 12 23 12zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>' },
-  'TikTok':     { color: '#010101', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16.6 3c.4 2.1 1.7 3.7 3.9 3.9v3.1c-1.5 0-2.8-.5-3.9-1.3v5.8c0 3.5-2.5 6.1-6 6.1-3.3 0-6-2.6-6-6 0-3.4 2.7-6.1 6.1-6.1.3 0 .7 0 1 .1v3.3c-.3-.1-.7-.2-1-.2-1.6 0-2.8 1.3-2.8 2.9 0 1.6 1.2 2.9 2.8 2.9 1.6 0 2.9-1.2 2.9-2.9V3h3z"/></svg>' },
-  'OpenAI':     { color: '#10A37F', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 2.4 3.4-.5 1 3.3 3 1.7-1.4 3.1 1.4 3.1-3 1.7-1 3.3-3.4-.5L12 22l-2.4-2.4-3.4.5-1-3.3-3-1.7 1.4-3.1L2.2 8.9l3-1.7 1-3.3 3.4.5z"/><circle cx="12" cy="12" r="3.2"/></svg>' },
-  'Cloudflare': { color: '#F38020', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .4-8.98 6 6 0 0 0-11.4 1.7A4 4 0 0 0 7 19h10.5z"/><path d="M12 14v5"/><path d="M9.5 16.5L12 19l2.5-2.5"/></svg>' },
-  'Amazon':     { color: '#FF9900', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>' },
-  'Facebook':   { color: '#1877F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 8h2.5V4.7H14c-2.5 0-4.2 1.6-4.2 4.1V11H7v3.3h2.8V21h3.4v-6.7h2.7l.5-3.3h-3.2V9c0-.7.3-1 1-1z"/></svg>' },
-  'Twitter':    { color: '#1DA1F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M22 5.9c-.7.3-1.5.6-2.3.7.8-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1-1.3-1.4-3.4-1-4.2.7-.6 1.3-.3 2.8.8 3.6-1.8-.1-3.5-.9-4.6-2.2-.9 1.5-.4 3.5 1.1 4.4-.6 0-1.2-.2-1.7-.5v.1c0 1.6 1.1 2.9 2.6 3.2-.5.1-1 .2-1.5.2-.4 0-.7 0-1.1-.1.7 2.2 2.9 3.8 5.3 3.9-1.9 1.5-4.4 2.4-7 2.4-.5 0-.9 0-1.4-.1 2.6 1.7 5.7 2.6 8.9 2.6 10.7 0 16.6-8.9 16.6-16.6v-.8c1.2-.8 2.2-1.9 3-3.1z"/></svg>' },
-  'Discord':    { color: '#5865F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.3 5.3A17.6 17.6 0 0 0 14.9 4l-.5 1.1a16 16 0 0 0-4.8 0L9.1 4a17.6 17.6 0 0 0-4.4 1.3A18.3 18.3 0 0 0 .5 19.2a17.6 17.6 0 0 0 5.3 2.7l1.2-1.9a11.4 11.4 0 0 1-1.8-.9l.4-.3a12.5 12.5 0 0 0 10.8 0l.4.3c-.6.4-1.2.7-1.8.9l1.2 1.9a17.6 17.6 0 0 0 5.3-2.7 18.3 18.3 0 0 0-3.2-13.9zM8.6 15.5c-1 0-1.9-1-1.9-2.1 0-1.2.8-2.1 1.9-2.1s1.9 1 1.9 2.1c0 1.2-.8 2.1-1.9 2.1zm6.8 0c-1 0-1.9-1-1.9-2.1 0-1.2.8-2.1 1.9-2.1s1.9 1 1.9 2.1c0 1.2-.8 2.1-1.9 2.1z"/></svg>' },
-  'Spotify':    { color: '#1DB954', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 14.4a.6.6 0 0 1-.9.2c-2.5-1.5-5.7-1.9-9.4-1-.4.1-.7-.2-.7-.6 0-.3.2-.6.6-.7 4.1-.9 7.7-.4 10.4 1.3.3.2.4.5 0 .8zm1.2-2.8a.8.8 0 0 1-1.1.2c-2.9-1.8-7.3-2.3-10.7-1.2-.4.1-.8-.2-.9-.6-.1-.4.2-.8.6-.9 3.9-1.2 8.7-.6 12 1.4.4.2.5.7.1 1.1zm.1-2.9c-3.5-2.1-9.2-2.3-12.5-1.3-.5.1-1-.2-1.1-.7-.1-.5.2-1 .7-1.1 3.8-1.1 10-1 14 1.4.5.3.6.9.3 1.4-.3.3-.8.5-1.4.3z"/></svg>' },
-  'Epic':       { color: '#444444', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 3-9 15L3 6z"/><path d="M3 6h18"/></svg>' },
-  'Riot':       { color: '#D13639', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
-  'GitHub':     { color: '#181717', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>' },
-  'DigitalOcean': { color: '#0080FF', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-9.9 11L4 15v-2.5a8 8 0 1 1 3.5 6.7L6 20.7A10 10 0 1 0 12 2zM5.8 17.4l.9-2.2-2.2 1.3zM8.5 19.2l.9-2.2-2.2 1.3z"/></svg>' },
-  'Oracle':     { color: '#F80000', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><path d="M3 12v4c0 2.8 4 5 9 5s9-2.2 9-5v-4"/></svg>' },
-  'Akamai':     { color: '#0091D9', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/><path d="M8 21h8M10 17v4M14 17v4"/></svg>' },
-  'Fastly':     { color: '#FF282D', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
-  'Meta':       { color: '#0081FB', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 4.5C9.8 2.5 6.5 2 4.6 4.6 2.8 7.1 3.5 10.5 5.4 12.5c2.4 2.5 5.4 5.5 6.6 7 1.2-1.5 4.2-4.5 6.6-7 1.9-2 2.6-5.4.8-7.9C17.5 2 14.2 2.5 12 4.5z"/></svg>' },
-  '其他/未知':   { color: '#8a8a8a', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+const SERVICE_META = {
+  'Apple': '#555555', 'Google': '#4285F4', 'Microsoft': '#00A4EF', 'Steam': '#1B2838',
+  'Telegram': '#229ED9', 'Netflix': '#E50914', 'YouTube': '#FF0000', 'TikTok': '#111111',
+  'OpenAI': '#10A37F', 'Cloudflare': '#F38020', 'Amazon': '#FF9900', 'Facebook': '#1877F2',
+  'Twitter': '#1DA1F2', 'Discord': '#5865F2', 'Spotify': '#1DB954', 'Epic': '#444444',
+  'Riot': '#D13639', 'GitHub': '#181717', 'DigitalOcean': '#0080FF', 'Oracle': '#F80000',
+  'Akamai': '#0091D9', 'Fastly': '#FF282D', 'Meta': '#0081FB', '其他/未知': '#8a8a8a'
 };
-const SVC_DEFAULT = { color: '#8a8a8a', svg: iconGlobe };
+const DONUT_COLORS = ['#2563eb','#60a5fa','#93c5fd','#bfdbfe','#cbd5e1','#e2e8f0'];
+let latestData = null;
+let activeServiceTab = 'now';
 
-function svcIcon(name) {
-  const m = SVC_META[name] || SVC_DEFAULT;
-  return `<span style="color:${m.color};display:inline-flex;vertical-align:-3px;margin-right:6px">${m.svg}</span>`;
-}
-
-// 服务分类渲染: 带图标 + 字节 + 占比条
-function renderServices(el, items, max) {
-  if (!items || items.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-  const top = items.slice(0, max || 20);
-  const maxN = top[0].bytes || 1;
-  el.innerHTML = top.map(r => {
-    const pct = Math.round((r.bytes / maxN) * 100);
-    return `<div class="row"><span class="name" title="${r.d}">${svcIcon(r.d)}${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${fmtBytes(r.bytes)}</span></div>`;
-  }).join('');
+function escapeHtml(v) {
+  return String(v ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function fmtBytes(b) {
-  if (b === null || b === undefined) return '-';
+  if (b === null || b === undefined || Number.isNaN(Number(b))) return '-';
   const u = ['B','KB','MB','GB','TB'];
-  let i = 0, n = b;
+  let i = 0, n = Number(b);
   while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
   return n.toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
 }
 
-function renderRows(el, items, max, unit, isBytes) {
-  if (!items || items.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-  const top = items.slice(0, max);
-  const maxN = top[0].n !== undefined ? top[0].n : (top[0].bytes || 1);
-  el.innerHTML = top.map(r => {
-    const v = r.n !== undefined ? r.n : (r.bytes || 0);
-    const pct = Math.round((v / maxN) * 100);
-    const label = isBytes ? fmtBytes(v) : (v + (unit || ''));
-    return `<div class="row"><span class="name" title="${r.d}">${iconGlobe} ${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${label}</span></div>`;
+function fmtNumber(n) {
+  if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
+  return Number(n).toLocaleString('zh-CN');
+}
+
+function pct(part, total) {
+  if (!total || !part) return 0;
+  return Math.max(0, Math.min(100, (Number(part) / Number(total)) * 100));
+}
+
+function serviceBadge(name) {
+  const color = SERVICE_META[name] || '#64748b';
+  const initial = (name || '?').trim().slice(0, 1).toUpperCase();
+  return `<span class="service-badge" style="--svc-color:${color}">${escapeHtml(initial)}</span>`;
+}
+
+function renderRank(el, items, max, opts = {}) {
+  if (!el) return;
+  if (!items || !items.length) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const top = items.slice(0, max || 20);
+  const getValue = r => r.n !== undefined ? Number(r.n || 0) : Number(r.bytes || 0);
+  const maxValue = Math.max(...top.map(getValue), 1);
+  el.innerHTML = top.map((r, idx) => {
+    const v = getValue(r);
+    const width = Math.max(v > 0 ? 3 : 0, Math.round(v / maxValue * 100));
+    const label = opts.bytes ? fmtBytes(v) : fmtNumber(v) + (opts.unit || '');
+    const name = escapeHtml(r.d ?? '-');
+    const nameMarkup = opts.service
+      ? `<span class="rank-name service-name">${serviceBadge(r.d)}<span title="${name}">${name}</span></span>`
+      : `<span class="rank-name" title="${name}">${name}</span>`;
+    return `<div class="rank-row">
+      <span class="rank-no ${idx < 3 ? 'top' : ''}">${String(idx + 1).padStart(2, '0')}</span>
+      ${nameMarkup}
+      <span class="progress"><i style="width:${width}%"></i></span>
+      <span class="rank-value">${label}</span>
+    </div>`;
   }).join('');
 }
 
 function renderHours(hours) {
-  if (!hours || hours.length === 0) { $('hourBars').innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const el = $('hourBars');
+  if (!hours || !hours.length) {
+    el.innerHTML = '<div class="chart-empty">暂无小时统计数据</div>';
+    $('hourPeak').textContent = '-';
+    $('hourPeakLabel').textContent = '峰值连接';
+    return;
+  }
   const last = hours.slice(-16);
-  const maxN = Math.max(...last.map(h => h.n), 1);
-  $('hourBars').innerHTML = last.map(h => {
-    const hgt = Math.max(2, Math.round((h.n / maxN) * 100));
-    return `<div class="b" style="height:${hgt}%" title="${h.d}:00 · ${h.n}"><span>${h.d.slice(5)}</span></div>`;
+  const maxN = Math.max(...last.map(h => Number(h.n || 0)), 1);
+  const peak = last.reduce((best, h) => Number(h.n || 0) > Number(best.n || 0) ? h : best, last[0]);
+  $('hourPeak').textContent = fmtNumber(peak.n);
+  $('hourPeakLabel').textContent = `峰值 · ${String(peak.d || '').slice(-5)}:00`;
+  el.innerHTML = last.map((h, index) => {
+    const n = Number(h.n || 0);
+    const height = Math.max(n > 0 ? 4 : 2, Math.round(n / maxN * 100));
+    const hour = String(h.d || '').slice(-5);
+    const showLabel = index % 3 === 0 || index === last.length - 1;
+    return `<div class="chart-bar" style="height:${height}%" data-label="${showLabel ? escapeHtml(hour) : ''}" title="${escapeHtml(h.d)}:00 · ${fmtNumber(n)}"></div>`;
   }).join('');
 }
+
+function renderDonut(services) {
+  const list = Array.isArray(services) ? services.filter(x => Number(x.bytes || 0) > 0) : [];
+  $('serviceCount').textContent = list.length ? list.length : '-';
+  if (!list.length) {
+    $('serviceDonut').style.background = 'conic-gradient(#e9eef6 0 100%)';
+    $('serviceLegend').innerHTML = '<div class="empty">暂无服务数据</div>';
+    $('topServiceShare').textContent = '-';
+    $('topServiceName').textContent = '暂无服务数据';
+    return;
+  }
+  const total = list.reduce((sum, x) => sum + Number(x.bytes || 0), 0);
+  const top = list.slice(0, 5);
+  const known = top.reduce((sum, x) => sum + Number(x.bytes || 0), 0);
+  const parts = [...top];
+  if (total > known) parts.push({d: '其他', bytes: total - known});
+
+  let acc = 0;
+  const gradient = parts.map((x, i) => {
+    const start = acc;
+    acc += pct(x.bytes, total);
+    return `${DONUT_COLORS[i % DONUT_COLORS.length]} ${start.toFixed(2)}% ${acc.toFixed(2)}%`;
+  }).join(', ');
+  $('serviceDonut').style.background = `conic-gradient(${gradient})`;
+
+  $('serviceLegend').innerHTML = parts.map((x, i) => {
+    const share = pct(x.bytes, total);
+    return `<div class="legend-row">
+      <span class="legend-dot" style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></span>
+      <span class="legend-name" title="${escapeHtml(x.d)}">${escapeHtml(x.d)}</span>
+      <span class="legend-value">${share.toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+
+  $('topServiceShare').textContent = pct(list[0].bytes, total).toFixed(0) + '%';
+  $('topServiceName').textContent = `${list[0].d} · ${fmtBytes(list[0].bytes)}`;
+}
+
+function getServicesForTab() {
+  if (!latestData) return [];
+  if (activeServiceTab === 'day') return latestData.day_net?.services || [];
+  if (activeServiceTab === 'month') return latestData.month_net?.services || [];
+  if (activeServiceTab === 'all') return latestData.all_net?.services || [];
+  return latestData.net?.services || [];
+}
+
+function renderServiceTab() {
+  renderRank($('serviceRank'), getServicesForTab(), 20, { bytes: true, service: true });
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeServiceTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === btn));
+    renderServiceTab();
+  });
+});
 
 async function refresh() {
   try {
     const res = await fetch('panel_data.json?t=' + Date.now(), {cache: 'no-store'});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
-    $('updated').textContent = '更新于 ' + d.generated;
-    $('genTime').textContent = d.generated;
-    $('totalConn').textContent = d.total_conn.toLocaleString();
-    $('windowInfo').textContent = d.window_start + ' ~ ' + d.window_end;
-    if (d.day_net && d.day_net.total_bytes > 0) {
-      $('dayNetBytes').textContent = fmtBytes(d.day_net.total_bytes);
-      $('dayNetInfo').textContent = d.day_net.samples + ' 次采样 · 出站';
-      renderRows($('dayNetList'), d.day_net.domains, 25, '', true);
-    } else {
-      $('dayNetBytes').textContent = '-';
-      $('dayNetInfo').textContent = '归档暂无数据';
-      $('dayNetList').innerHTML = '<div class="empty">归档暂无数据</div>';
-    }
-    $('activeConn').textContent = d.active_conns;
-    const ib = (d.inbounds || []).map(x => x.n).reduce((a, b) => a + b, 0);
-    $('activeDetail').textContent = '入站 ' + ib;
-    $('srcIps').textContent = (d.top_ips || []).length;
+    latestData = d;
+
+    $('updated').textContent = '更新于 ' + (d.generated || '-');
+    $('genTime').textContent = d.generated || '-';
+    $('totalConn').textContent = fmtNumber(d.total_conn);
+    $('windowInfo').textContent = d.window_start && d.window_end ? `${d.window_start} ~ ${d.window_end}` : '统计窗口 -';
+    $('activeConn').textContent = fmtNumber(d.active_conns);
+
+    const inbound = (d.inbounds || []).reduce((sum, x) => sum + Number(x.n || 0), 0);
+    $('activeDetail').textContent = '入站 ' + fmtNumber(inbound);
+    $('srcIps').textContent = fmtNumber((d.top_ips || []).length);
+
     if (d.net) {
       $('netBytes').textContent = fmtBytes(d.net.total_bytes);
-      $('netStreams').textContent = (d.net.domains || []).length + ' 个目标';
-      renderRows($('netList'), d.net.domains, 25, '', true);
-      renderServices($('svcList'), d.net.services, 20);
+      $('netStreams').textContent = `${(d.net.domains || []).length} 个目标 · 出站`;
+      $('targetCount').textContent = fmtNumber((d.net.domains || []).length);
+      renderRank($('netList'), d.net.domains, 15, { bytes: true });
+      renderDonut(d.net.services || []);
     } else {
       $('netBytes').textContent = '-';
       $('netStreams').textContent = '抓包分析未就绪';
+      $('targetCount').textContent = '-';
       $('netList').innerHTML = '<div class="empty">等待抓包数据…</div>';
-      $('svcList').innerHTML = '<div class="empty">等待抓包数据…</div>';
+      renderDonut([]);
     }
-    // 今日服务分类 (归档累计)
-    if (d.day_net && d.day_net.services && d.day_net.services.length > 0) {
-      renderServices($('daySvcList'), d.day_net.services, 20);
+
+    if (d.day_net && Number(d.day_net.total_bytes || 0) > 0) {
+      $('dayNetBytes').textContent = fmtBytes(d.day_net.total_bytes);
+      $('dayNetInfo').textContent = `${fmtNumber(d.day_net.samples)} 次采样 · 出站`;
+      $('sampleCount').textContent = fmtNumber(d.day_net.samples);
+      renderRank($('dayNetList'), d.day_net.domains, 15, { bytes: true });
     } else {
-      $('daySvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
+      $('dayNetBytes').textContent = '-';
+      $('dayNetInfo').textContent = '归档暂无数据';
+      $('sampleCount').textContent = '-';
+      $('dayNetList').innerHTML = '<div class="empty">归档暂无数据</div>';
     }
-    // 本月服务分类
-    if (d.month_net && d.month_net.services && d.month_net.services.length > 0) {
-      renderServices($('monthSvcList'), d.month_net.services, 20);
-    } else {
-      $('monthSvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
-    }
-    // 全时段服务分类
-    if (d.all_net && d.all_net.services && d.all_net.services.length > 0) {
-      renderServices($('allSvcList'), d.all_net.services, 20);
-    } else {
-      $('allSvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
-    }
-    renderRows($('domainList'), d.top_domains, 25);
-    renderRows($('ipList'), d.top_ips, 10);
-    renderRows($('nodeList'), d.top_nodes, 10);
+
+    renderRank($('domainList'), d.top_domains, 25);
+    renderRank($('ipList'), d.top_ips, 10);
+    renderRank($('nodeList'), d.top_nodes, 10);
     renderHours(d.hours);
+    renderServiceTab();
   } catch (e) {
-    $('updated').textContent = '加载失败: ' + e.message;
+    $('updated').textContent = '加载失败 · ' + e.message;
+    console.error(e);
   }
 }
 
