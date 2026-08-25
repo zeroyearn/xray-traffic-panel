@@ -99,14 +99,15 @@ def load_net():
         return None
 
 
-def load_day_archive():
-    """Aggregate today's per-domain bytes from the long-term archive (JSONL).
+def load_archive(prefix=''):
+    """Aggregate per-domain bytes from archive JSONL for a time span.
 
-    Samples are disjoint 5-minute windows, so summing gives today's total
-    outbound proxy traffic, comparable with vnstat's daily total.
+    prefix=''        -> ALL time (full history)
+    prefix='YYYYMM'  -> one month
+    prefix='YYYYMMDD'-> one day
+    Samples are disjoint 5-minute windows, so summing gives total bytes.
     Also aggregates per-service (IP->service classifier + domain suffix).
     """
-    day = datetime.now().strftime('%Y%m%d')
     arch = os.environ.get('XTP_ARCHIVE_DIR', '/root/agsbx/panel/archive')
     dom = Counter()
     total = 0
@@ -115,7 +116,8 @@ def load_day_archive():
         for fn in os.listdir(arch):
             if not (fn.startswith('domains_') and fn.endswith('.jsonl')):
                 continue
-            if not fn.replace('domains_', '').replace('.jsonl', '').startswith(day):
+            key = fn.replace('domains_', '').replace('.jsonl', '')
+            if prefix and not key.startswith(prefix):
                 continue
             with open(os.path.join(arch, fn)) as f:
                 for line in f:
@@ -155,7 +157,7 @@ def load_day_archive():
             svc_bytes['其他/未知'] += b
 
     return {
-        'day': day,
+        'prefix': prefix or 'all',
         'samples': samples,
         'total_bytes': total,
         'domains': [{'d': d, 'bytes': b} for d, b in dom.most_common(40)],
@@ -188,7 +190,10 @@ def main():
     rx, tx = vnstat_daily()
     total_conn, inbounds, targets = current_conns()
     net = load_net()
-    day_net = load_day_archive()
+    now = datetime.now()
+    day_net = load_archive(now.strftime('%Y%m%d'))
+    month_net = load_archive(now.strftime('%Y%m'))
+    all_net = load_archive('')
 
     top_domains = [{'d': d, 'n': n} for d, n in domains.most_common(25)]
     top_nodes = [{'d': d, 'n': n} for d, n in nodes.most_common()]
@@ -211,10 +216,12 @@ def main():
         'inbounds': inbounds_list,
         'net': net,
         'day_net': day_net,
+        'month_net': month_net,
+        'all_net': all_net,
     }
     with open(OUT, 'w') as f:
         json.dump(data, f)
-    print(f'panel data written: {len(top_domains)} domains, {total_conn} active conns, net={bool(net)}, day_net={bool(day_net)}')
+    print(f'panel data written: {len(top_domains)} domains, {total_conn} active conns, net={bool(net)}, day={bool(day_net)}, month={bool(month_net)}, all={bool(all_net)}')
 
 
 if __name__ == '__main__':

@@ -308,6 +308,23 @@
   </div>
   <div class="card">
     <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      本月服务分类 TOP
+    </h2>
+    <div id="monthSvcList"></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      全时段服务分类 TOP
+    </h2>
+    <div id="allSvcList"></div>
+  </div>
+  <div class="card">
+    <h2>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
       服务分类汇总 (近15分钟)
     </h2>
@@ -434,6 +451,18 @@ async function refresh() {
       renderServices($('daySvcList'), d.day_net.services, 20);
     } else {
       $('daySvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
+    }
+    // 本月服务分类
+    if (d.month_net && d.month_net.services && d.month_net.services.length > 0) {
+      renderServices($('monthSvcList'), d.month_net.services, 20);
+    } else {
+      $('monthSvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
+    }
+    // 全时段服务分类
+    if (d.all_net && d.all_net.services && d.all_net.services.length > 0) {
+      renderServices($('allSvcList'), d.all_net.services, 20);
+    } else {
+      $('allSvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
     }
     renderRows($('domainList'), d.top_domains, 25);
     renderRows($('ipList'), d.top_ips, 10);
