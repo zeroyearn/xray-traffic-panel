@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>代理流量面板</title>
 <style>
   :root {
@@ -343,7 +346,8 @@ function renderNetShare(net) {
 
 async function refresh() {
   try {
-    const res = await fetch('panel_data.json?t=' + Date.now());
+    const res = await fetch('panel_data.json?t=' + Date.now(), {cache: 'no-store'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
     $('updated').textContent = '更新于 ' + d.generated;
     $('genTime').textContent = d.generated;
