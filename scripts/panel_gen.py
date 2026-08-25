@@ -12,6 +12,7 @@ Config via environment variables (see README):
 import json
 import os
 import re
+import sys
 import subprocess
 from collections import Counter
 from datetime import datetime
@@ -103,6 +104,7 @@ def load_day_archive():
 
     Samples are disjoint 5-minute windows, so summing gives today's total
     outbound proxy traffic, comparable with vnstat's daily total.
+    Also aggregates per-service (IP->service classifier + domain suffix).
     """
     day = datetime.now().strftime('%Y%m%d')
     arch = os.environ.get('XTP_ARCHIVE_DIR', '/root/agsbx/panel/archive')
@@ -127,12 +129,58 @@ def load_day_archive():
                         dom[d['d']] += d.get('bytes', 0)
     except FileNotFoundError:
         return None
+
+    # service classification of archived entries
+    svc_bytes = Counter()
+    classifier = None
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from ip_classify import Classifier
+        classifier = Classifier(os.environ.get('XTP_RULES', '/root/agsbx/panel/svc_rules.json'))
+    except Exception:
+        classifier = None
+
+    for target, b in dom.items():
+        svc = None
+        if target.startswith('IP:'):
+            ip = target[3:]
+            if classifier:
+                svc, _ = classifier.classify(ip)
+        else:
+            if classifier:
+                svc = classify_domain(target, classifier)
+        if svc:
+            svc_bytes[svc] += b
+        else:
+            svc_bytes['其他/未知'] += b
+
     return {
         'day': day,
         'samples': samples,
         'total_bytes': total,
         'domains': [{'d': d, 'bytes': b} for d, b in dom.most_common(40)],
+        'services': [{'d': d, 'bytes': b} for d, b in svc_bytes.most_common()],
     }
+
+
+def classify_domain(domain, classifier):
+    """Map a domain to a service using rule library domain suffixes."""
+    if not classifier:
+        return None
+    try:
+        svcs = classifier.services
+    except AttributeError:
+        return None
+    d = domain.lower()
+    best = None
+    best_len = -1
+    for svc, v in svcs.items():
+        for suf in v.get('domains', []):
+            suf = suf.lower()
+            if d == suf or d.endswith('.' + suf):
+                if len(suf) > best_len:
+                    best, best_len = svc, len(suf)
+    return best
 
 
 def main():

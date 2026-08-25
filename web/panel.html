@@ -301,10 +301,17 @@
 <div class="grid">
   <div class="card">
     <h2>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
-      近15分钟流量构成
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      今日服务分类 TOP (归档累计)
     </h2>
-    <div id="netShare"></div>
+    <div id="daySvcList"></div>
+  </div>
+  <div class="card">
+    <h2>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V8l6 4V8l6 4V4h4v16"/></svg>
+      服务分类汇总 (近15分钟)
+    </h2>
+    <div id="svcList"></div>
   </div>
 </div>
 
@@ -313,6 +320,51 @@
 <script>
 const $ = id => document.getElementById(id);
 const iconGlobe = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+
+// 服务图标库: 每个服务一个 SVG (lucide 风格, stroke=currentColor) + 品牌色
+const SVC_META = {
+  'Apple':      { color: '#555555', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.05 12.54c-.03-2.84 2.32-4.2 2.42-4.27-1.32-1.93-3.37-2.2-4.1-2.23-1.75-.18-3.4 1.03-4.29 1.03-.88 0-2.25-1-3.7-.97-1.9.03-3.66 1.11-4.64 2.82-1.98 3.43-.5 8.51 1.42 11.29.94 1.36 2.06 2.89 3.53 2.84 1.42-.06 1.96-.92 3.67-.92 1.71 0 2.2.92 3.7.89 1.53-.03 2.5-1.39 3.43-2.76 1.08-1.58 1.53-3.11 1.55-3.19-.03-.01-2.97-1.14-3-4.53zM14.3 4.29c.78-.94 1.3-2.25 1.16-3.55-1.12.05-2.48.75-3.28 1.69-.72.83-1.35 2.16-1.18 3.43 1.25.1 2.52-.63 3.3-1.57z"/></svg>' },
+  'Google':     { color: '#4285F4', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><line x1="15.5" y1="9" x2="19" y2="9"/><line x1="17.25" y1="7.25" x2="17.25" y2="10.75"/></svg>' },
+  'Microsoft':  { color: '#00A4EF', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 2h9v9H2zM13 2h9v9h-9zM2 13h9v9H2zM13 13h9v9h-9z"/></svg>' },
+  'Steam':      { color: '#1B2838', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>' },
+  'Telegram':   { color: '#229ED9', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.5 3.5L2.9 10.8c-.9.36-.86 1.66.05 1.96l4.6 1.52 1.76 5.62c.3.96 1.5 1.16 2.1.36l2.5-3.35 4.7 3.46c.8.6 1.9.15 2.1-.84l2.9-15.1c.2-1.03-.82-1.88-1.7-1.5zM9.6 14.6l.9-4.5 7.2-5.6-8.1 10.1z"/></svg>' },
+  'Netflix':    { color: '#E50914', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8.5 2h3v20h-3zM13.5 2h3l-3 20h-3zM4 4.5h3v15H4zM17 4.5h3v15h-3z"/></svg>' },
+  'YouTube':    { color: '#FF0000', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M23 12s0-3.3-.42-4.88c-.23-.87-.9-1.54-1.77-1.77C19.2 4.93 12 4.93 12 4.93s-7.2 0-8.81.42c-.87.23-1.54.9-1.77 1.77C1 8.7 1 12 1 12s0 3.3.42 4.88c.23.87.9 1.54 1.77 1.77 1.61.42 8.81.42 8.81.42s7.2 0 8.81-.42c.87-.23 1.54-.9 1.77-1.77C23 15.3 23 12 23 12zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>' },
+  'TikTok':     { color: '#010101', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16.6 3c.4 2.1 1.7 3.7 3.9 3.9v3.1c-1.5 0-2.8-.5-3.9-1.3v5.8c0 3.5-2.5 6.1-6 6.1-3.3 0-6-2.6-6-6 0-3.4 2.7-6.1 6.1-6.1.3 0 .7 0 1 .1v3.3c-.3-.1-.7-.2-1-.2-1.6 0-2.8 1.3-2.8 2.9 0 1.6 1.2 2.9 2.8 2.9 1.6 0 2.9-1.2 2.9-2.9V3h3z"/></svg>' },
+  'OpenAI':     { color: '#10A37F', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 2.4 3.4-.5 1 3.3 3 1.7-1.4 3.1 1.4 3.1-3 1.7-1 3.3-3.4-.5L12 22l-2.4-2.4-3.4.5-1-3.3-3-1.7 1.4-3.1L2.2 8.9l3-1.7 1-3.3 3.4.5z"/><circle cx="12" cy="12" r="3.2"/></svg>' },
+  'Cloudflare': { color: '#F38020', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .4-8.98 6 6 0 0 0-11.4 1.7A4 4 0 0 0 7 19h10.5z"/><path d="M12 14v5"/><path d="M9.5 16.5L12 19l2.5-2.5"/></svg>' },
+  'Amazon':     { color: '#FF9900', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>' },
+  'Facebook':   { color: '#1877F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 8h2.5V4.7H14c-2.5 0-4.2 1.6-4.2 4.1V11H7v3.3h2.8V21h3.4v-6.7h2.7l.5-3.3h-3.2V9c0-.7.3-1 1-1z"/></svg>' },
+  'Twitter':    { color: '#1DA1F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M22 5.9c-.7.3-1.5.6-2.3.7.8-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1-1.3-1.4-3.4-1-4.2.7-.6 1.3-.3 2.8.8 3.6-1.8-.1-3.5-.9-4.6-2.2-.9 1.5-.4 3.5 1.1 4.4-.6 0-1.2-.2-1.7-.5v.1c0 1.6 1.1 2.9 2.6 3.2-.5.1-1 .2-1.5.2-.4 0-.7 0-1.1-.1.7 2.2 2.9 3.8 5.3 3.9-1.9 1.5-4.4 2.4-7 2.4-.5 0-.9 0-1.4-.1 2.6 1.7 5.7 2.6 8.9 2.6 10.7 0 16.6-8.9 16.6-16.6v-.8c1.2-.8 2.2-1.9 3-3.1z"/></svg>' },
+  'Discord':    { color: '#5865F2', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.3 5.3A17.6 17.6 0 0 0 14.9 4l-.5 1.1a16 16 0 0 0-4.8 0L9.1 4a17.6 17.6 0 0 0-4.4 1.3A18.3 18.3 0 0 0 .5 19.2a17.6 17.6 0 0 0 5.3 2.7l1.2-1.9a11.4 11.4 0 0 1-1.8-.9l.4-.3a12.5 12.5 0 0 0 10.8 0l.4.3c-.6.4-1.2.7-1.8.9l1.2 1.9a17.6 17.6 0 0 0 5.3-2.7 18.3 18.3 0 0 0-3.2-13.9zM8.6 15.5c-1 0-1.9-1-1.9-2.1 0-1.2.8-2.1 1.9-2.1s1.9 1 1.9 2.1c0 1.2-.8 2.1-1.9 2.1zm6.8 0c-1 0-1.9-1-1.9-2.1 0-1.2.8-2.1 1.9-2.1s1.9 1 1.9 2.1c0 1.2-.8 2.1-1.9 2.1z"/></svg>' },
+  'Spotify':    { color: '#1DB954', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 14.4a.6.6 0 0 1-.9.2c-2.5-1.5-5.7-1.9-9.4-1-.4.1-.7-.2-.7-.6 0-.3.2-.6.6-.7 4.1-.9 7.7-.4 10.4 1.3.3.2.4.5 0 .8zm1.2-2.8a.8.8 0 0 1-1.1.2c-2.9-1.8-7.3-2.3-10.7-1.2-.4.1-.8-.2-.9-.6-.1-.4.2-.8.6-.9 3.9-1.2 8.7-.6 12 1.4.4.2.5.7.1 1.1zm.1-2.9c-3.5-2.1-9.2-2.3-12.5-1.3-.5.1-1-.2-1.1-.7-.1-.5.2-1 .7-1.1 3.8-1.1 10-1 14 1.4.5.3.6.9.3 1.4-.3.3-.8.5-1.4.3z"/></svg>' },
+  'Epic':       { color: '#444444', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 3-9 15L3 6z"/><path d="M3 6h18"/></svg>' },
+  'Riot':       { color: '#D13639', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
+  'GitHub':     { color: '#181717', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>' },
+  'DigitalOcean': { color: '#0080FF', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 0-9.9 11L4 15v-2.5a8 8 0 1 1 3.5 6.7L6 20.7A10 10 0 1 0 12 2zM5.8 17.4l.9-2.2-2.2 1.3zM8.5 19.2l.9-2.2-2.2 1.3z"/></svg>' },
+  'Oracle':     { color: '#F80000', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><path d="M3 12v4c0 2.8 4 5 9 5s9-2.2 9-5v-4"/></svg>' },
+  'Akamai':     { color: '#0091D9', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/><path d="M8 21h8M10 17v4M14 17v4"/></svg>' },
+  'Fastly':     { color: '#FF282D', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' },
+  'Meta':       { color: '#0081FB', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 4.5C9.8 2.5 6.5 2 4.6 4.6 2.8 7.1 3.5 10.5 5.4 12.5c2.4 2.5 5.4 5.5 6.6 7 1.2-1.5 4.2-4.5 6.6-7 1.9-2 2.6-5.4.8-7.9C17.5 2 14.2 2.5 12 4.5z"/></svg>' },
+  '其他/未知':   { color: '#8a8a8a', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+};
+const SVC_DEFAULT = { color: '#8a8a8a', svg: iconGlobe };
+
+function svcIcon(name) {
+  const m = SVC_META[name] || SVC_DEFAULT;
+  return `<span style="color:${m.color};display:inline-flex;vertical-align:-3px;margin-right:6px">${m.svg}</span>`;
+}
+
+// 服务分类渲染: 带图标 + 字节 + 占比条
+function renderServices(el, items, max) {
+  if (!items || items.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const top = items.slice(0, max || 20);
+  const maxN = top[0].bytes || 1;
+  el.innerHTML = top.map(r => {
+    const pct = Math.round((r.bytes / maxN) * 100);
+    return `<div class="row"><span class="name" title="${r.d}">${svcIcon(r.d)}${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${fmtBytes(r.bytes)}</span></div>`;
+  }).join('');
+}
 
 function fmtBytes(b) {
   if (b === null || b === undefined) return '-';
@@ -344,16 +396,6 @@ function renderHours(hours) {
   }).join('');
 }
 
-function renderNetShare(net) {
-  const el = $('netShare');
-  if (!net || !net.domains || net.domains.length === 0) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-  const total = net.total_bytes || 1;
-  el.innerHTML = net.domains.slice(0, 10).map(r => {
-    const pct = Math.round((r.bytes / total) * 100);
-    return `<div class="row"><span class="name" title="${r.d}">${iconGlobe} ${r.d}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${pct}%</span></div>`;
-  }).join('');
-}
-
 async function refresh() {
   try {
     const res = await fetch('panel_data.json?t=' + Date.now(), {cache: 'no-store'});
@@ -380,14 +422,18 @@ async function refresh() {
       $('netBytes').textContent = fmtBytes(d.net.total_bytes);
       $('netStreams').textContent = (d.net.domains || []).length + ' 个目标';
       renderRows($('netList'), d.net.domains, 25, '', true);
-      renderNetShare(d.net);
-      renderRows($('svcList'), d.net.services, 20, '', true);
+      renderServices($('svcList'), d.net.services, 20);
     } else {
       $('netBytes').textContent = '-';
       $('netStreams').textContent = '抓包分析未就绪';
       $('netList').innerHTML = '<div class="empty">等待抓包数据…</div>';
-      $('netShare').innerHTML = '<div class="empty">等待抓包数据…</div>';
       $('svcList').innerHTML = '<div class="empty">等待抓包数据…</div>';
+    }
+    // 今日服务分类 (归档累计)
+    if (d.day_net && d.day_net.services && d.day_net.services.length > 0) {
+      renderServices($('daySvcList'), d.day_net.services, 20);
+    } else {
+      $('daySvcList').innerHTML = '<div class="empty">归档暂无数据</div>';
     }
     renderRows($('domainList'), d.top_domains, 25);
     renderRows($('ipList'), d.top_ips, 10);

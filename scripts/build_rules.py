@@ -47,6 +47,37 @@ SERVICES = {
 
 CTX = ssl.create_default_context()
 
+# 额外规则: blackmatrix7 缺失的服务/域名/IP (来源: v2fly/domain-list-community, cache-domains, Steam CDN 规则)
+EXTRA = {
+    'Steam': {
+        'domains': [
+            'steamcontent.com', 'steamserver.net', 'steamcdn-a.akamaihd.net',
+            'steamcommunity.com', 'steam-chat.com', 'steambroadcast.akamaized.net',
+            'steamcdn-a.akamaihd.net', 'steamcdn-b.akamaihd.net', 'steamcdn-c.akamaihd.net',
+            'steamcdn-d.akamaihd.net', 'steam-download.akamaized.net',
+        ],
+        'cidrs': [
+            '45.121.184.0/24', '103.28.54.0/24', '103.10.124.0/23',
+            '146.66.152.0/24', '155.133.0.0/16', '162.254.192.0/21',
+        ],
+    },
+    'GitHub': {
+        'domains': ['githubusercontent.com', 'githubassets.com', 'github.io', 'github.dev'],
+    },
+    'Discord': {
+        'domains': ['discord.gg', 'discordapp.com', 'discordapp.net', 'discord.com', 'discord.media'],
+    },
+    'OpenAI': {
+        'domains': ['openai.com', 'oaistatic.com', 'oaiusercontent.com', 'chatgpt.com', 'chat.openai.com'],
+    },
+    'TikTok': {
+        'domains': ['tiktok.com', 'tiktokcdn.com', 'tiktokv.com', 'musical.ly', 'byteoversea.com', 'ibytedtos.com'],
+    },
+    'Riot': {
+        'domains': ['riotgames.com', 'riotcdn.net', 'riot.net'],
+    },
+}
+
 
 def fetch(url, timeout=30):
     req = urllib.request.Request(url, headers={'User-Agent': 'curl/8.0'})
@@ -96,6 +127,10 @@ def main():
         for asn in asns:
             ac, _ = fetch_ipverse(asn)
             asn_cidrs.extend(ac)
+        # merge extra rules (missing domains/CIDRs)
+        extra = EXTRA.get(svc, {})
+        cidrs.extend(extra.get('cidrs', []))
+        domains.extend(extra.get('domains', []))
         # dedupe
         cidrs = sorted(set(cidrs))
         result['services'][svc] = {
