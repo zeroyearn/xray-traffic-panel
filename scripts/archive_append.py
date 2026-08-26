@@ -99,13 +99,28 @@ def main():
         else:
             ts = datetime.fromtimestamp(mtime - 300).strftime('%Y-%m-%d %H:%M:%S')
         day_key = ts[:10].replace('-', '')
+
+        # **dedup by timestamp**: skip if this ts already exists in the archive
+        day_file = os.path.join(ARCHIVE_DIR, f'domains_{day_key}.jsonl')
+        if os.path.exists(day_file):
+            with open(day_file) as f:
+                seen = set()
+                for line in f:
+                    try:
+                        seen.add(json.loads(line).get('ts', ''))
+                    except Exception:
+                        pass
+            if ts in seen:
+                state.add(path)
+                continue
+
         rec = {
             'ts': ts,
             'total_bytes': sum(dom.values()),
             'domains': [{'d': d, 'bytes': b} for d, b in
                         sorted(dom.items(), key=lambda kv: -kv[1])[:50]],
         }
-        with open(os.path.join(ARCHIVE_DIR, f'domains_{day_key}.jsonl'), 'a') as f:
+        with open(day_file, 'a') as f:
             f.write(json.dumps(rec, ensure_ascii=False) + '\n')
         state.add(path)
         processed_any = True
