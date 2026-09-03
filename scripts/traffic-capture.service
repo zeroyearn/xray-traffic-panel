@@ -1,10 +1,14 @@
 [Unit]
-Description=Traffic capture for xray traffic panel (dumpcap ring buffer)
-Documentation=https://github.com/zeroyearn/xray-traffic-panel
+Description=Traffic capture for proxy panel (dumpcap ring buffer, Azure proxy-vm)
 After=network.target
 
 [Service]
 Type=simple
+Environment=XTP_PCAP_DIR=/root/agsbx/pcap
+Environment=XTP_EXCLUDE_PORTS=80,443,8443,8080,22,2222
+Environment=XTP_ROTATE_SEC=300
+Environment=XTP_MAX_MB=20
+Environment=XTP_MAX_FILES=72
 ExecStart=/root/agsbx/panel/capture.sh
 Restart=always
 RestartSec=3

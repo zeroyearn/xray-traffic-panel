@@ -76,7 +76,7 @@ def analyze():
         subprocess.run(['mergecap', '-w', tmp.name] + files, capture_output=True, text=True, timeout=30)
         cmd = ['tshark', '-r', tmp.name, '-T', 'fields',
                '-e', 'tcp.stream', '-e', 'tls.handshake.extensions_server_name',
-               '-e', 'ip.dst', '-e', 'frame.len',
+               '-e', 'ip.dst', '-e', 'ipv6.dst', '-e', 'frame.len',
                '-E', 'separator=|', '-E', 'occurrence=a']
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=90).stdout
     finally:
@@ -85,9 +85,10 @@ def analyze():
     streams = {}
     for line in out.splitlines():
         parts = line.split('|')
-        if len(parts) < 4:
+        if len(parts) < 5:
             continue
-        stream, sni, dst, flen = parts[0], parts[1], parts[2], parts[3]
+        stream, sni, dst4, dst6, flen = parts[0], parts[1], parts[2], parts[3], parts[4]
+        dst = dst4 or dst6
         try:
             flen = int(flen)
         except ValueError:
@@ -104,8 +105,8 @@ def analyze():
     svc_agg = defaultdict(lambda: {'bytes': 0, 'conns': 0})
     classifier = make_classifier()
     for s in streams.values():
-        # skip noise: broadcast / private ranges
-        if s['dst'] in ('255.255.255.255',) or (s['dst'] and s['dst'].startswith(('10.', '192.168.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'))):
+        # skip noise: broadcast / private ranges (v4 + v6)
+        if s['dst'] in ('255.255.255.255',) or (s['dst'] and (s['dst'].startswith(('10.', '192.168.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.')) or s['dst'].lower().startswith(('fe80:', 'fc', 'fd', '::1', 'ff02:')))):
             continue
         if s['sni']:
             key = s['sni']

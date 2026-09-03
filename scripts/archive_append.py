@@ -39,16 +39,17 @@ def analyze_file(fn):
     """Return {domain: bytes} for one pcap file."""
     cmd = ['tshark', '-r', fn, '-T', 'fields',
            '-e', 'tcp.stream', '-e', 'tls.handshake.extensions_server_name',
-           '-e', 'ip.dst', '-e', 'frame.len',
+           '-e', 'ip.dst', '-e', 'ipv6.dst', '-e', 'frame.len',
            '-E', 'separator=|', '-E', 'occurrence=a']
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=90).stdout
 
     streams = {}
     for line in out.splitlines():
         parts = line.split('|')
-        if len(parts) < 4:
+        if len(parts) < 5:
             continue
-        stream, sni, dst, flen = parts[0], parts[1], parts[2], parts[3]
+        stream, sni, dst4, dst6, flen = parts[0], parts[1], parts[2], parts[3], parts[4]
+        dst = dst4 or dst6
         try:
             flen = int(flen)
         except ValueError:

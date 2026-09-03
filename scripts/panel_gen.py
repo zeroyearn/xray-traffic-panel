@@ -72,7 +72,7 @@ def vnstat_daily():
 def current_conns():
     try:
         out = subprocess.run(['ss', '-tnp'], capture_output=True, text=True, timeout=10).stdout
-        lines = [l for l in out.splitlines() if 'xray' in l and 'ESTAB' in l]
+        lines = [l for l in out.splitlines() if 'sing-box' in l and 'ESTAB' in l]
         targets = Counter()
         inbounds = Counter()
         for l in lines:
